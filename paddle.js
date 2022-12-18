@@ -42,18 +42,30 @@ class Player2Behavior {
 class AIBehaviour {
   constructor(paddle) {
     this.paddle = paddle;
+    this.pointOfIntersection = paddle.position;
+
+    EventHandler.addEventListener('gameStart', this.calculatePointOfIntersection);
+    EventHandler.addEventListener('ballHit', this.calculatePointOfIntersection);
   }
 
   step() {
-    if (getSideFromBallHeading(ball) != this.paddle.side)
+    if (getSideFromHeading(ball.heading) != this.paddle.side)
       return;
 
-    let p1 = ball.position;
-    let p2 = p5.Vector.add(ball.position, p5.Vector.mult(ball.heading, 5));
-    let p3 = createVector(this.paddle.position.x, this.paddle.position.y);
-    let p4 = createVector(this.paddle.position.x, this.paddle.position.y + this.paddle.size.y);
+    if (this.pointOfIntersection === undefined)
+      return;
 
-    this.paddle.position.y = Mathematics.getPointOfIntersection(p1, p2, p3, p4).y - (this.paddle.size.y / 2);
+    let difference = p5.Vector.sub(this.pointOfIntersection, this.paddle.position);
+    if (abs(difference.y) > 2)
+      this.paddle.position.y += difference.normalize().y * PaddleSpeed * (deltaTime / 1000);
+  }
+
+  calculatePointOfIntersection() {
+    let paddle = getPaddleFromSide(getSideFromHeading(ball.heading));
+
+    paddle.behaviour.pointOfIntersection = getPointIntersection(ball.position, p5.Vector.mult(ball.heading, 5));
+    paddle.behaviour.pointOfIntersection.sub(0, (paddle.size.y / 2) - (ball.size / 2));
+    paddle.behaviour.pointOfIntersection.add(0, random(-paddle.size.y / 2, paddle.size.y / 2));
   }
 }
 
@@ -177,6 +189,8 @@ class Paddle {
         ball.position.x = this.position.x - ball.size;
       }
     }
+
+    EventHandler.dispatchEvent(new CustomEvent('ballHit'));
   }
 
   ballColliding() {

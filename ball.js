@@ -43,10 +43,3 @@ class Ball {
     this.heading.y = sin(angle) * random([1, -1]);
   }
 }
-
-function getSideFromBallHeading(ball) {
-  if (ball.heading.x < 0) 
-    return Side.Left;
-  else
-    return Side.Right
-}
