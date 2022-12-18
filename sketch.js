@@ -1,6 +1,6 @@
 const ScreenPadding = 10;
 const PaddleSpeed = 200;
-const BallSpeed = 250;
+const BallSpeed = 300;
 
 const EventHandler = new EventTarget();
 
@@ -8,7 +8,7 @@ let paddles;
 let ball;
 
 function setup() {
-  createCanvas(600, 400);
+  createCanvas(500, 400);
   paddles = [];
   paddles[0] = new Paddle(Side.Left, Type.AI);
   paddles[1] = new Paddle(Side.Right, Type.AI);
@@ -46,6 +46,8 @@ function reset() {
   for (let paddle of paddles) {
     paddle.reset();
   }
+
+  EventHandler.dispatchEvent(new CustomEvent('gameStart'));
 }
 
 function getSideFromHeading(heading) {

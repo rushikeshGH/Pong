@@ -22,6 +22,9 @@ class Player1Behavior {
       this.paddle.position.y += PaddleSpeed * (deltaTime / 1000);
     }
   }
+
+  reset() {
+  }
 }
 
 class Player2Behavior {
@@ -37,12 +40,16 @@ class Player2Behavior {
       this.paddle.position.y += PaddleSpeed * (deltaTime / 1000);
     }
   }
+
+  reset() {
+  }
 }
 
 class AIBehaviour {
   constructor(paddle) {
     this.paddle = paddle;
     this.pointOfIntersection = paddle.position;
+    this.reactionTime = 0;
 
     EventHandler.addEventListener('gameStart', this.calculatePointOfIntersection);
     EventHandler.addEventListener('ballHit', this.calculatePointOfIntersection);
@@ -52,20 +59,33 @@ class AIBehaviour {
     if (getSideFromHeading(ball.heading) != this.paddle.side)
       return;
 
-    if (this.pointOfIntersection === undefined)
+    if (this.reactionTime > 0) {
+      this.reactionTime -= (deltaTime / 1000);
       return;
+    }
 
     let difference = p5.Vector.sub(this.pointOfIntersection, this.paddle.position);
     if (abs(difference.y) > 2)
       this.paddle.position.y += difference.normalize().y * PaddleSpeed * (deltaTime / 1000);
   }
 
-  calculatePointOfIntersection() {
+  reset() {
+    this.pointOfIntersection = paddle.position;
+    this.reactionTime = 0;
+  }
+
+  calculatePointOfIntersection(e) {
     let paddle = getPaddleFromSide(getSideFromHeading(ball.heading));
 
+    if (paddle.type !== Type.AI)
+      return;
+
+    if (e.type !== 'gameStart')
+      paddle.behaviour.reactionTime = random(0, 1);
+
     paddle.behaviour.pointOfIntersection = getPointIntersection(ball.position, p5.Vector.mult(ball.heading, 5));
+    paddle.behaviour.pointOfIntersection.add(0, random(-paddle.size.y / 3, paddle.size.y / 3));
     paddle.behaviour.pointOfIntersection.sub(0, (paddle.size.y / 2) - (ball.size / 2));
-    paddle.behaviour.pointOfIntersection.add(0, random(-paddle.size.y / 2, paddle.size.y / 2));
   }
 }
 
@@ -136,6 +156,7 @@ class Paddle {
         throw 'Enter a valid side';
     }
 
+    this.behaviour.reset();
     this.position.y = (height / 2) - (this.size.y / 2);
   }
 
